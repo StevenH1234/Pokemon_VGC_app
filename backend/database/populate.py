@@ -129,8 +129,55 @@ def moves_csv():
 
     create_csv(move_dictionary, "move.csv", "move_id")
 
+def abilities_csv():
+    abilities_url = BASE_URL + '/ability/'
+    response = requests.get(abilities_url)
+    data = response.json()
+    num_abilities = data['count']
+    ability_name = []
+
+    for i in range(num_abilities):
+        ability_url = abilities_url + str(i+1)
+        response = requests.get(ability_url)
+        if response.status_code == 200:
+            data = response.json()
+            ability_name.append(data['name'])
+            print(f'{data['name']}')
+        else:
+            print(f'ability {i+1} does not exist')
+    
+    ability_dictionary = {
+        "ability_name" : ability_name
+    }
+
+    create_csv(ability_dictionary, "abilities.csv", "ability_id")
+
+def methods_csv():
+    methods_url = BASE_URL + "/move-learn-method/"
+    response = requests.get(methods_url)
+    data = response.json()
+    num_methods = data['count']
+    method_name = []
+
+    for i in range(num_methods):
+        method_url = methods_url + str(i+1)
+        response = requests.get(method_url)
+        if response.status_code == 200:
+            data = response.json()
+            method_name.append(data['name'])
+            print(f'{data['name']}')
+        else:
+            print(f'method {i+1} not found')
+
+    methods_dictionary = {
+        "method_name": method_name
+    }
+
+    create_csv(methods_dictionary, "methods.csv", "method_id")
+
 def main():
     print("main")
+    methods_csv()
 
 if __name__=="__main__":
     main()
