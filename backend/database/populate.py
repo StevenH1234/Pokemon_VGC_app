@@ -1,6 +1,7 @@
 import os
 import csv 
 import requests
+from bs4 import BeautifulSoup
 import pandas as pd
 
 BASE_URL = "https://pokeapi.co/api/v2"
@@ -15,10 +16,14 @@ def loadList(fileName):
         loadedList = [line.strip() for line in file]
     return loadedList
 
-def create_csv(dictionary, csvName, index_label):
+def create_csv(dictionary, csvName, index_label=None):
     df = pd.DataFrame(dictionary)
     df.index = df.index+1
     return df.to_csv(csvName, index_label=index_label)
+
+def add_to_dict(dictionary, entry):
+    for idx, key in enumerate(dictionary.keys()):
+        dictionary[key].append(entry[idx])
 
 def items_csv():
     item_url = BASE_URL + "/item/"
@@ -175,9 +180,43 @@ def methods_csv():
 
     create_csv(methods_dictionary, "methods.csv", "method_id")
 
+def player_scrape():
+    pokemon_leaderboard_url = "https://limitlessvgc.com/players/?rank=pts&pg="
+    player_dict = {
+        "player_name" : [],
+        "country" : [],
+        "points" : []
+    }
+
+    for i in range(108):
+        if i%10 == 0:
+            print(f'{i} pages completed')
+
+        response = requests.get(pokemon_leaderboard_url + str(i+1))
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        content_div = soup.find('div', class_='container content')
+        table = content_div.find('table', class_='table')
+        rows = table.find_all("tr")
+
+        for row in rows:
+            cells = row.find_all(["td", "th"])
+            entry = []
+            for cell in cells[1:len(cells)]:
+                span = cell.find('span')
+                if span:
+                    entry.append(span.get("title"))
+                if len(cell.get_text()) > 0:
+                    entry.append(cell.get_text())
+
+            if entry[0] != 'Name':
+                add_to_dict(player_dict, entry)
+    
+    create_csv(player_dict, "players.csv", "player_id")
+
 def main():
     print("main")
-    methods_csv()
+    player_scrape()
 
 if __name__=="__main__":
     main()
